@@ -42,7 +42,7 @@ logging.basicConfig(
 cfg = docker.Config('/data/')
 params = cfg.get_parameters()
 client_id = params['client_id']
-client_secret = params['client_secret']
+client_secret = params['#client_secret']
 api_endpoint = params['api_endpoint']
 look_id = params['look_id']
 #data_table = cfg.get_parameters()["data_table"]
