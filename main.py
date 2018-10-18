@@ -34,7 +34,7 @@ sys.tracebacklimit = 0
 
 ### Logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)-8s : [line:%(lineno)3s] %(message)s',
     datefmt="%Y-%m-%d %H:%M:%S")
 
