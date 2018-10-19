@@ -31,11 +31,11 @@ from pylooker.client import LookerClient
 abspath = os.path.abspath(__file__)
 script_path = os.path.dirname(abspath)
 os.chdir(script_path)
-sys.tracebacklimit = 0
+sys.tracebacklimit = 3
 
 ### Logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(levelname)-8s : [line:%(lineno)3s] %(message)s',
     datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -48,10 +48,7 @@ api_endpoint = params['api_endpoint']
 looker_objects = params['looker_objects']
 #data_table = cfg.get_parameters()["data_table"]
 
-logging.info(looker_objects[0])
-logging.info(len(looker_objects))
-
-logging.debug("Fetched parameters are :" + str(params))
+#logging.debug("Fetched parameters are :" + str(params))
 
 ### Get proper list of tables
 cfg = docker.Config('/data/')
@@ -88,7 +85,7 @@ def create_manifest(file_name, destination):
         logging.error("Could not produce %s output file manifest." % file_name)
         logging.error(e)
 
-def fetch_data(endpoint, id, secret, object_id, type="look"):
+def fetch_data(endpoint, id, secret, object_id):
     """
     Function fetching the data from query or looker via API.
     """
@@ -96,14 +93,7 @@ def fetch_data(endpoint, id, secret, object_id, type="look"):
     logging.info("Attempting to access API endpoint %s" % endpoint)
     lc = LookerClient(endpoint, id, secret)
 
-    if type == 'look':
-        look_data = lc.run_look(int(object_id))
-    elif type == 'query':
-        look_data = lc.run_query(str(object_id))
-    else:
-        logging.error("Type must be query or look. Unsupported type: %s" % type)
-        sys.exit(1)
-    
+    look_data = lc.run_look(int(object_id))
 
     if (isinstance(look_data, dict) and \
     "message" in look_data.keys()):
@@ -130,7 +120,6 @@ def fullmatch_re(pattern, string):
 
 def main():
     for obj in looker_objects:
-        type = obj['type']
         id = obj['id']
         output = obj['output']
 
@@ -146,11 +135,10 @@ def main():
             logging.error("The name of the table contains unsupported chatacters. Please provide a valid name with bucket and table name.")
             sys.exit(1)
 
-
         file_name = 'looker_data_%s.csv' % id
         output_path = DEFAULT_FILE_DESTINATION + file_name
 
-        look_data = fetch_data(api_endpoint, client_id, client_secret, id, type)
+        look_data = fetch_data(api_endpoint, client_id, client_secret, id)
         look_data.to_csv(output_path, index=False)
         create_manifest(file_name, destination)
 

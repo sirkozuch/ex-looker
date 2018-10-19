@@ -5,7 +5,7 @@
       "client_id",
       "#client_secret",
       "api_endpoint",
-      "looker_object"
+      "looker_objects"
     ],
     "properties": {
       "client_id": {
@@ -13,51 +13,51 @@
         "type": "string",
         "description": "Client ID for API calls.",
         "minLength": 1,
-        "default": ""
+        "default": "",
+        "propertyOrder": 1
       },
-      "#clientsecret": {
+      "#client_secret": {
         "type": "string",
         "format": "password",
         "title": "Client Secret",
         "description": "Client secret for API calls.",
         "minLength": 1,
-        "default": ""
+        "default": "",
+        "propertyOrder": 2
       },
-      "apiendpoint": {
+      "api_endpoint": {
         "type": "string",
         "title": "API Endpoint.",
         "description": "API endpoint for API calls. Usually in form 'https://company.looker.com:19999/api/3.0/'.",
-        "default": "https://company.looker.com:19999/api/3.0/"
+        "default": "https://company.looker.com:19999/api/3.0/",
+        "propertyOrder": 3
       },
       "looker_objects": {
         "type": "array",
         "format": "table",
-        "title": "Pets",
+        "title": "Looker objects",
         "uniqueItems": true,
+        "propertyOrder": 4,
         "items": {
           "type": "object",
-          "title": "Pet",
+          "title": "Object",
           "properties": {
-            "type": {
+              "id": {
               "type": "string",
-              "enum": [
-                "cat",
-                "dog",
-                "bird",
-                "reptile",
-                "other"
-              ],
-              "default": "dog"
+              "title": "Look/query ID",
+              "propertyOrder": 1
             },
-            "name": {
-              "type": "string"
+            "output" : {
+              "type": "string",
+              "default": "",
+              "propertyOrder": 2
             }
           }
         },
         "default": [
           {
-            "type": "dog",
-            "name": "Walter"
+            "id": "1",
+            "output": ""
           }
         ]
       }
