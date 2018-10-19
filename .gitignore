@@ -1,3 +1,5 @@
 /vendor
 /data
 deployment
+config.json
+test.py

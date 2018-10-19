@@ -1,0 +1,65 @@
+{
+    "title": "Parameters",
+    "type": "object",
+    "required": [
+      "client_id",
+      "#client_secret",
+      "api_endpoint",
+      "looker_object"
+    ],
+    "properties": {
+      "client_id": {
+        "title": "Client ID",
+        "type": "string",
+        "description": "Client ID for API calls.",
+        "minLength": 1,
+        "default": ""
+      },
+      "#clientsecret": {
+        "type": "string",
+        "format": "password",
+        "title": "Client Secret",
+        "description": "Client secret for API calls.",
+        "minLength": 1,
+        "default": ""
+      },
+      "apiendpoint": {
+        "type": "string",
+        "title": "API Endpoint.",
+        "description": "API endpoint for API calls. Usually in form 'https://company.looker.com:19999/api/3.0/'.",
+        "default": "https://company.looker.com:19999/api/3.0/"
+      },
+      "looker_objects": {
+        "type": "array",
+        "format": "table",
+        "title": "Pets",
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "title": "Pet",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "cat",
+                "dog",
+                "bird",
+                "reptile",
+                "other"
+              ],
+              "default": "dog"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "default": [
+          {
+            "type": "dog",
+            "name": "Walter"
+          }
+        ]
+      }
+    }
+  }

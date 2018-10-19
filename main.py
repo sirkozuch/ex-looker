@@ -21,6 +21,7 @@ import csv
 import json
 import pandas as pd
 import pprint
+import re
 from keboola import docker
 from pylooker.client import LookerClient
 
@@ -44,8 +45,13 @@ params = cfg.get_parameters()
 client_id = params['client_id']
 client_secret = params['#client_secret']
 api_endpoint = params['api_endpoint']
-look_id = params['look_id']
+looker_objects = params['looker_objects']
 #data_table = cfg.get_parameters()["data_table"]
+
+logging.info(looker_objects[0])
+logging.info(len(looker_objects))
+
+logging.debug("Fetched parameters are :" + str(params))
 
 ### Get proper list of tables
 cfg = docker.Config('/data/')
@@ -59,27 +65,96 @@ DEFAULT_FILE_INPUT = "/data/in/tables/"
 DEFAULT_FILE_DESTINATION = "/data/out/tables/"
 
 
-logging.info("Attempting to access API endoint %s" % api_endpoint)
+def create_manifest(file_name, destination):
+    """
+    Function for manifest creation.
+    """
 
-lc = LookerClient(api_endpoint, client_id, client_secret)
+    file = '/data/out/tables/' + str(file_name) + '.manifest'
 
-for id in look_id:
-    name = 'look_' + str(id)
-    logging.info('Downloading data from look with ID %s' % id)
-    look_data = lc.run_look(int(id))
+    manifest_template = {
+                         "destination": str(destination),
+                         "incremental": False,
+                         "primary_key": []
+                        }
+
+    manifest = manifest_template
+
+    try:
+        with open(file, 'w') as file_out:
+            json.dump(manifest, file_out)
+            logging.info("Output %s manifest file produced." % file_name)
+    except Exception as e:
+        logging.error("Could not produce %s output file manifest." % file_name)
+        logging.error(e)
+
+def fetch_data(endpoint, id, secret, object_id, type="look"):
+    """
+    Function fetching the data from query or looker via API.
+    """
+
+    logging.info("Attempting to access API endpoint %s" % endpoint)
+    lc = LookerClient(endpoint, id, secret)
+
+    if type == 'look':
+        look_data = lc.run_look(int(object_id))
+    elif type == 'query':
+        look_data = lc.run_query(str(object_id))
+    else:
+        logging.error("Type must be query or look. Unsupported type: %s" % type)
+        sys.exit(1)
+    
 
     if (isinstance(look_data, dict) and \
-        "message" in look_data.keys()):
+    "message" in look_data.keys()):
         log = "Data could not be downloaded. Response for look {} "\
-                "from server was: {}. Process exiting."
+        "from server was: {}. Process exiting."
+
         logging.error(log.format(id, look_data['message']))
         logging.warn("Please make sure that look %s exists." % id)
         sys.exit(1)
+    elif isinstance(look_data, list):
+        logging.info("Data for look %s was downloaded successfully." % object_id)
+        return pd.DataFrame(look_data)
     else:
-        logging.info("Data for look %s was downloaded successfully." % id)
-        path = DEFAULT_FILE_DESTINATION + name + '.csv'
-        pd.DataFrame(look_data).to_csv(path, index=False)
-        logging.info("%s saved to %s." % (name, path))
+        logging.error("Unexpected type. Expected dict or list, got %s" % type(look_data))
+        sys.exit(2)
 
-logging.info("Script finished.")
-sys.exit(0)
+def fullmatch_re(pattern, string):
+    match = re.fullmatch(pattern, string)
+
+    if match:
+        return True
+    else:
+        return False
+
+def main():
+    for obj in looker_objects:
+        type = obj['type']
+        id = obj['id']
+        output = obj['output']
+
+        bool = fullmatch_re(r'^(in|out)\.(c-)\w*\.[\w\-]*', output)
+        
+        if bool:
+            destination = output
+            logging.debug("The table with id {0} will be saved to {1}.".format(id, destination))
+        elif bool == False and len(output) == 0:
+            destination = "in.c-looker.looker_data_%s" % id
+            logging.debug("The table with id {0} will be saved to {1}.".format(id, destination))
+        else:
+            logging.error("The name of the table contains unsupported chatacters. Please provide a valid name with bucket and table name.")
+            sys.exit(1)
+
+
+        file_name = 'looker_data_%s.csv' % id
+        output_path = DEFAULT_FILE_DESTINATION + file_name
+
+        look_data = fetch_data(api_endpoint, client_id, client_secret, id, type)
+        look_data.to_csv(output_path, index=False)
+        create_manifest(file_name, destination)
+
+if __name__ == "__main__":
+    main()
+
+    logging.info("Script finished.")
