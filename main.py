@@ -31,11 +31,11 @@ from pylooker.client import LookerClient
 abspath = os.path.abspath(__file__)
 script_path = os.path.dirname(abspath)
 os.chdir(script_path)
-sys.tracebacklimit = 3
+sys.tracebacklimit = 0
 
 ### Logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)-8s : [line:%(lineno)3s] %(message)s',
     datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -91,9 +91,15 @@ def fetch_data(endpoint, id, secret, object_id):
     """
 
     logging.info("Attempting to access API endpoint %s" % endpoint)
+
     lc = LookerClient(endpoint, id, secret)
 
-    look_data = lc.run_look(int(object_id))
+    
+    try:
+        look_data = lc.run_look(int(object_id))
+    except:
+        logging.error("Unable to download data. Please check whether API endpoint was inputted correctly.")
+        sys.exit(1)
 
     if (isinstance(look_data, dict) and \
     "message" in look_data.keys()):

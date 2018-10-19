@@ -42,15 +42,18 @@
           "type": "object",
           "title": "Object",
           "properties": {
-              "id": {
+            "id": {
               "type": "string",
-              "title": "Look/query ID",
-              "propertyOrder": 1
+              "title": "Look ID",
+              "propertyOrder": 1,
+              "description": "ID of a look, from which the data is to be downloaded."
             },
             "output" : {
               "type": "string",
+              "title": "Destination table",
               "default": "",
-              "propertyOrder": 2
+              "propertyOrder": 2,
+              "description": "Table destination in storage. If left blank, tables will be downloaded to in.c-looker.looker_data_xx, where xx is the ID of look."
             }
           }
         },
