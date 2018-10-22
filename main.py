@@ -12,10 +12,12 @@ Python 3 environment
 import sys
 import os
 import logging
+import json
 import pandas as pd
 import requests
-import json
 import re
+import logging_gelf.handlers
+import logging_gelf.formatters
 from keboola import docker
 
 
@@ -24,13 +26,25 @@ from keboola import docker
 abspath = os.path.abspath(__file__)
 script_path = os.path.dirname(abspath)
 os.chdir(script_path)
-sys.tracebacklimit = 0
+sys.tracebacklimit = 3
 
 ### Logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)-8s : [line:%(lineno)3s] %(message)s',
     datefmt="%Y-%m-%d %H:%M:%S")
+
+logger = logging.getLogger()
+logging_gelf_handler = logging_gelf.handlers.GELFTCPSocketHandler(
+    host=os.getenv('KBC_LOGGER_ADDR'),
+    port=int(os.getenv('KBC_LOGGER_PORT'))
+    )
+logging_gelf_handler.setFormatter(logging_gelf.formatters.GELFFormatter(null_character=True))
+logger.addHandler(logging_gelf_handler)
+
+# removes the initial stdout logging
+logger.removeHandler(logger.handlers[0])
+
 
 ### Access the supplied rules
 cfg = docker.Config('/data/')
@@ -40,6 +54,7 @@ client_secret = params['#client_secret']
 api_endpoint = params['api_endpoint']
 looker_objects = params['looker_objects']
 
+logging.info("Successfully fetched all parameters.")
 
 #logging.debug("Fetched parameters are :" + str(params))
 
@@ -72,8 +87,8 @@ def fetch_data(endpoint, id, secret, object_id, limit):
         logging.info("Login to Looker was successfull.")
         token = login.json()['access_token']
     else:
-        logging.error("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted.")
-        logging.error("Server response: %s" % login.reason)
+        logging.critical("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted.")
+        logging.critical("Server response: %s" % login.reason)
         sys.exit(1)
     
     head = {'Authorization': 'token %s' % token}
@@ -86,8 +101,8 @@ def fetch_data(endpoint, id, secret, object_id, limit):
         logging.info("Data was downloaded successfully.")
         return pd.io.json.json_normalize(data.json())
     else: 
-        logging.error("Data could not be downloaded.")
-        logging.error("Request returned: Error %s %s" % (data.status_code, data.reason))
+        logging.critical("Data could not be downloaded.")
+        logging.critical("Request returned: Error %s %s" % (data.status_code, data.reason))
         logging.warn("For more information, see: %s" % data.json()['documentation_url'])
         sys.exit(1)
 
@@ -111,8 +126,8 @@ def create_manifest(file_name, destination, primary_key, incremental):
             json.dump(manifest, file_out)
             logging.info("Output %s manifest file produced." % file_name)
     except Exception as e:
-        logging.error("Could not produce %s output file manifest." % file_name)
-        logging.error(e)
+        logging.critical("Could not produce %s output file manifest." % file_name)
+        logging.critical(e)
 
 def fullmatch_re(pattern, string):
     match = re.fullmatch(pattern, string)
@@ -142,7 +157,7 @@ def main():
             destination = "in.c-looker.looker_data_%s" % id
             logging.debug("The table with id {0} will be saved to {1}.".format(id, destination))
         else:
-            logging.error("The name of the table contains unsupported chatacters. Please provide a valid name with bucket and table name.")
+            logging.critical("The name of the table contains unsupported chatacters. Please provide a valid name with bucket and table name.")
             sys.exit(1)
 
         file_name = 'looker_data_%s.csv' % id
