@@ -84,7 +84,7 @@ def fetch_data(endpoint, id, secret, object_id, limit):
     login = requests.post(api_endpoint + 'login', params=params)
 
     if login.status_code == 200:
-        logging.info("Login to Looker was successfull.")
+        logging.info("Login to Looker was successful.")
         token = login.json()['access_token']
     else:
         logging.critical("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted.")
@@ -103,7 +103,7 @@ def fetch_data(endpoint, id, secret, object_id, limit):
     else: 
         logging.critical("Data could not be downloaded.")
         logging.critical("Request returned: Error %s %s" % (data.status_code, data.reason))
-        logging.warn("For more information, see: %s" % data.json()['documentation_url'])
+        logging.critical("For more information, see: %s" % data.json()['documentation_url'])
         sys.exit(1)
 
 def create_manifest(file_name, destination, primary_key, incremental):
