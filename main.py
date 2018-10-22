@@ -9,11 +9,6 @@ Python 3 environment
 #import pip
 #pip.main(['install', '--disable-pip-version-check', '--no-cache-dir', 'logging_gelf'])
 
-
-########################
-####### NO PIVOT #######
-########################
-
 import sys
 import os
 import logging
