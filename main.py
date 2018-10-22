@@ -12,11 +12,9 @@ Python 3 environment
 import sys
 import os
 import logging
-import csv
-import json
 import pandas as pd
-import pprint
 import requests
+import json
 import re
 from keboola import docker
 
@@ -30,7 +28,7 @@ sys.tracebacklimit = 0
 
 ### Logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)-8s : [line:%(lineno)3s] %(message)s',
     datefmt="%Y-%m-%d %H:%M:%S")
 
