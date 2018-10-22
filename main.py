@@ -9,21 +9,14 @@ Python 3 environment
 #import pip
 #pip.main(['install', '--disable-pip-version-check', '--no-cache-dir', 'logging_gelf'])
 
-
-########################
-####### NO PIVOT #######
-########################
-
 import sys
 import os
 import logging
-import csv
-import json
 import pandas as pd
-import pprint
+import requests
+import json
 import re
 from keboola import docker
-from pylooker.client import LookerClient
 
 
 
@@ -46,7 +39,7 @@ client_id = params['client_id']
 client_secret = params['#client_secret']
 api_endpoint = params['api_endpoint']
 looker_objects = params['looker_objects']
-#data_table = cfg.get_parameters()["data_table"]
+
 
 #logging.debug("Fetched parameters are :" + str(params))
 
@@ -62,7 +55,43 @@ DEFAULT_FILE_INPUT = "/data/in/tables/"
 DEFAULT_FILE_DESTINATION = "/data/out/tables/"
 
 
-def create_manifest(file_name, destination):
+def fetch_data(endpoint, id, secret, object_id, limit):
+    """
+    Function fetching the data from query or looker via API.
+    """
+
+    logging.info("Attempting to access API endpoint %s" % endpoint)
+
+    params = {'client_id': id, 
+              'client_secret': secret}
+
+    logging.info("Logging in...")
+    login = requests.post(api_endpoint + 'login', params=params)
+
+    if login.status_code == 200:
+        logging.info("Login to Looker was successfull.")
+        token = login.json()['access_token']
+    else:
+        logging.error("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted.")
+        logging.error("Server response: %s" % login.reason)
+        sys.exit(1)
+    
+    head = {'Authorization': 'token %s' % token}
+    look_url = endpoint + 'looks/%s/run/json?limit=%s' % (object_id, str(limit))
+
+    logging.info("Attempting to download data for look %s" % object_id)
+    data = requests.get(look_url, headers=head)
+
+    if data.status_code == 200:
+        logging.info("Data was downloaded successfully.")
+        return pd.io.json.json_normalize(data.json())
+    else: 
+        logging.error("Data could not be downloaded.")
+        logging.error("Request returned: Error %s %s" % (data.status_code, data.reason))
+        logging.warn("For more information, see: %s" % data.json()['documentation_url'])
+        sys.exit(1)
+
+def create_manifest(file_name, destination, primary_key, incremental):
     """
     Function for manifest creation.
     """
@@ -71,8 +100,8 @@ def create_manifest(file_name, destination):
 
     manifest_template = {
                          "destination": str(destination),
-                         "incremental": False,
-                         "primary_key": []
+                         "incremental": incremental,
+                         "primary_key": primary_key
                         }
 
     manifest = manifest_template
@@ -84,37 +113,6 @@ def create_manifest(file_name, destination):
     except Exception as e:
         logging.error("Could not produce %s output file manifest." % file_name)
         logging.error(e)
-
-def fetch_data(endpoint, id, secret, object_id):
-    """
-    Function fetching the data from query or looker via API.
-    """
-
-    logging.info("Attempting to access API endpoint %s" % endpoint)
-
-    lc = LookerClient(endpoint, id, secret)
-
-    
-    try:
-        look_data = lc.run_look(int(object_id))
-    except:
-        logging.error("Unable to download data. Please check whether API endpoint was inputted correctly.")
-        sys.exit(1)
-
-    if (isinstance(look_data, dict) and \
-    "message" in look_data.keys()):
-        log = "Data could not be downloaded. Response for look {} "\
-        "from server was: {}. Process exiting."
-
-        logging.error(log.format(id, look_data['message']))
-        logging.warn("Please make sure that look %s exists." % id)
-        sys.exit(1)
-    elif isinstance(look_data, list):
-        logging.info("Data for look %s was downloaded successfully." % object_id)
-        return pd.DataFrame(look_data)
-    else:
-        logging.error("Unexpected type. Expected dict or list, got %s" % type(look_data))
-        sys.exit(2)
 
 def fullmatch_re(pattern, string):
     match = re.fullmatch(pattern, string)
@@ -128,6 +126,12 @@ def main():
     for obj in looker_objects:
         id = obj['id']
         output = obj['output']
+        inc = obj['incremental']
+        primary_key = obj['primary_key']
+        limit = obj['limit']
+
+        pk = [col.strip() for col in primary_key.split(',')]
+
 
         bool = fullmatch_re(r'^(in|out)\.(c-)\w*\.[\w\-]*', output)
         
@@ -144,9 +148,21 @@ def main():
         file_name = 'looker_data_%s.csv' % id
         output_path = DEFAULT_FILE_DESTINATION + file_name
 
-        look_data = fetch_data(api_endpoint, client_id, client_secret, id)
+        look_data = fetch_data(api_endpoint, client_id, client_secret, id, limit)
+        
+        for key in pk:
+            if (key in list(look_data) and \
+            key != ''):
+                next
+            elif key == '':
+                pk.remove(key)
+            else:
+                logging.warn("%s column is not in table columns. The column will be ommited as primary key." % key)
+                pk.remove(key)
+                logging.info("Available columns to be used as primary key are %s" % str(list(look_data)))
+
         look_data.to_csv(output_path, index=False)
-        create_manifest(file_name, destination)
+        create_manifest(file_name, destination, pk, inc)
 
 if __name__ == "__main__":
     main()

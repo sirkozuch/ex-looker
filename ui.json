@@ -1,68 +1,94 @@
 {
-    "title": "Parameters",
-    "type": "object",
-    "required": [
-      "client_id",
-      "#client_secret",
-      "api_endpoint",
-      "looker_objects"
-    ],
-    "properties": {
-      "client_id": {
-        "title": "Client ID",
-        "type": "string",
-        "description": "Client ID for API calls.",
-        "minLength": 1,
-        "default": "",
-        "propertyOrder": 1
-      },
-      "#client_secret": {
-        "type": "string",
-        "format": "password",
-        "title": "Client Secret",
-        "description": "Client secret for API calls.",
-        "minLength": 1,
-        "default": "",
-        "propertyOrder": 2
-      },
-      "api_endpoint": {
-        "type": "string",
-        "title": "API Endpoint.",
-        "description": "API endpoint for API calls. Usually in form 'https://company.looker.com:19999/api/3.0/'.",
-        "default": "https://company.looker.com:19999/api/3.0/",
-        "propertyOrder": 3
-      },
-      "looker_objects": {
-        "type": "array",
-        "format": "table",
-        "title": "Looker objects",
-        "uniqueItems": true,
-        "propertyOrder": 4,
-        "items": {
-          "type": "object",
-          "title": "Object",
-          "properties": {
-            "id": {
-              "type": "string",
-              "title": "Look ID",
-              "propertyOrder": 1,
-              "description": "ID of a look, from which the data is to be downloaded."
-            },
-            "output" : {
-              "type": "string",
-              "title": "Destination table",
-              "default": "",
-              "propertyOrder": 2,
-              "description": "Table destination in storage. If left blank, tables will be downloaded to in.c-looker.looker_data_xx, where xx is the ID of look."
-            }
+  "title": "Parameters",
+  "type": "object",
+  "required": [
+    "client_id",
+    "#client_secret",
+    "api_endpoint",
+    "looker_objects"
+  ],
+  "properties": {
+    "client_id": {
+      "title": "Client ID",
+      "type": "string",
+      "description": "Client ID for API calls.",
+      "minLength": 1,
+      "default": "",
+      "propertyOrder": 1
+    },
+    "#client_secret": {
+      "type": "string",
+      "format": "password",
+      "title": "Client Secret",
+      "description": "Client secret for API calls.",
+      "minLength": 1,
+      "default": "",
+      "propertyOrder": 2
+    },
+    "api_endpoint": {
+      "type": "string",
+      "title": "API Endpoint.",
+      "description": "API endpoint for API calls. Usually in form 'https://company.looker.com:19999/api/3.0/'.",
+      "default": "https://company.looker.com:19999/api/3.0/",
+      "propertyOrder": 3
+    },
+    "looker_objects": {
+      "type": "array",
+      "format": "table",
+      "title": "Looker objects",
+      "uniqueItems": true,
+      "propertyOrder": 4,
+      "items": {
+        "type": "object",
+        "title": "Object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Look ID",
+            "propertyOrder": 1,
+            "description": "ID of a look, from which the data is to be downloaded."
+          },
+          "output" : {
+            "type": "string",
+            "title": "Destination table",
+            "default": "",
+            "propertyOrder": 2,
+            "description": "Table destination in storage. If left blank, tables will be downloaded to in.c-looker.looker_data_xx, where xx is the ID of look."
+          },
+          "incremental" : {
+            "type": "boolean",
+            "enum": [
+              false,
+              true
+            ],
+            "propertyOrder": 3,
+            "default": false,
+            "title": "Incremental load",
+            "description": "Marks, whether table should be loaded incrementally into storage."
+          },
+          "primary_key": {
+            "type": "string",
+            "title": "Primary key",
+            "description": "Comma separated column names to be used as primary keys.",
+            "propertyOrder": 4
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Limit of rows to be downloaded. See component description for information on limitations of Looker API.",
+            "propertyOrder": 5
           }
-        },
-        "default": [
-          {
-            "id": "1",
-            "output": ""
-          }
-        ]
-      }
+        }
+      },
+      "default": [
+        {
+          "id": "1",
+          "output": "",
+          "incremental": false,
+          "primary_key": "",
+          "limit": 5000
+        }
+      ]
     }
   }
+}
