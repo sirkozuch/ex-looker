@@ -24,7 +24,7 @@ import pprint
 import re
 from keboola import docker
 from pylooker.client import LookerClient
-
+import requests
 
 
 ### Environment setup
