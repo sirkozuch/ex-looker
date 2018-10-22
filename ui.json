@@ -76,7 +76,8 @@
             "type": "integer",
             "title": "Limit",
             "description": "Limit of rows to be downloaded. See component description for information on limitations of Looker API.",
-            "propertyOrder": 5
+            "propertyOrder": 5,
+            "default": 5000
           }
         }
       },
