@@ -175,11 +175,13 @@ def main():
                 logging.warn("%s column is not in table columns. The column will be ommited as primary key." % key)
                 pk.remove(key)
                 logging.info("Available columns to be used as primary key are %s." % str(list(look_data)))
-
+                
+        """
         for col in list(look_data):
             if len(col) > 64:
                 logging.critical("%s exceeds 64 character length. Please change the name of the column or alter the look %s." % (col, id))
                 sys.exit(1)
+        """
 
         look_data.to_csv(output_path, index=False)
         create_manifest(file_name, destination, pk, inc)
