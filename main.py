@@ -133,6 +133,11 @@ def main():
     for obj in looker_objects:
         id = obj['id']
         output = obj['output']
+        inc = obj['incremental']
+        primary_key = obj['primary_key']
+        limit = obj['limit']
+
+        pk = [col.strip() for col in primary_key.split(',')]
 
 
         bool = fullmatch_re(r'^(in|out)\.(c-)\w*\.[\w\-]*', output)
@@ -150,9 +155,21 @@ def main():
         file_name = 'looker_data_%s.csv' % id
         output_path = DEFAULT_FILE_DESTINATION + file_name
 
-        look_data = fetch_data(api_endpoint, client_id, client_secret, id, 5000)
+        look_data = fetch_data(api_endpoint, client_id, client_secret, id, limit)
+        
+        for key in pk:
+            if (key in list(look_data) and \
+            key != ''):
+                next
+            elif key == '':
+                pk.remove(key)
+            else:
+                logging.warn("%s column is not in table columns. The column will be ommited as primary key." % key)
+                pk.remove(key)
+                logging.info("Available columns to be used as primary key are %s" % str(list(look_data)))
+
         look_data.to_csv(output_path, index=False)
-        create_manifest(file_name, destination)
+        create_manifest(file_name, destination, pk, inc)
 
 if __name__ == "__main__":
     main()
