@@ -26,6 +26,7 @@ from keboola import docker
 from pylooker.client import LookerClient
 import requests
 
+########## Limited to 5000 rows with pivot, otherwise no pivot is downloaded ########
 
 ### Environment setup
 abspath = os.path.abspath(__file__)
