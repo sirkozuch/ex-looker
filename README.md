@@ -8,6 +8,8 @@ The extractor is limited by **limitations** of Looker API, which currently are:
 * If a look has less than 5000 rows, everything will be downloaded, without any limitations to pivoting and/or dimensions.
 * If a look does not contain any pivot columns, everything will be downloaded with no limitations to row limit. 
 
+To download all the data, use `limit=-1`, even though data will be truncated due to above limitations.
+
 ### Input
 
 Configuration schema accepts following parameters:
