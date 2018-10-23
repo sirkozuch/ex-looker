@@ -173,6 +173,7 @@ def main():
             if (str(key) in list(look_data) and \
             key != ''):
                 logging.info("%s will be used as primary key." % key)
+                pk[pk.index(key)] = key.replace('.', '_')
             elif key == '':
                 pk.remove(key)
             else:
