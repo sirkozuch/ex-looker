@@ -87,7 +87,9 @@ def fetch_data(endpoint, id, secret, object_id, limit):
         logging.info("Login to Looker was successful.")
         token = login.json()['access_token']
     else:
-        logging.critical("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted. Server response: %s" % login.reason)
+        msg1 = "Could not login to Looker. Please check, whether correct"
+        msg2 = "credentials and/or endpoint were inputted. Server response: %s" % login.reason
+        logging.critical(" ".join([msg1, msg2]))
         sys.exit(1)
     
     head = {'Authorization': 'token %s' % token}
@@ -102,8 +104,7 @@ def fetch_data(endpoint, id, secret, object_id, limit):
     else: 
         msg1 = "Data could not be downloaded. Request returned: Error %s %s." % (data.status_code, data.reason)
         msg2 = "For more information, see: %s" % data.json()['documentation_url']
-        msg = " ".join([msg1, msg2])
-        logging.critical(msg)
+        logging.critical(" ".join([msg1, msg2]))
         sys.exit(1)
 
 def create_manifest(file_name, destination, primary_key, incremental):
@@ -157,7 +158,9 @@ def main():
             destination = "in.c-looker.looker_data_%s" % id
             logging.debug("The table with id {0} will be saved to {1}.".format(id, destination))
         else:
-            logging.critical("The name of the table contains unsupported chatacters. Please provide a valid name with bucket and table name.")
+            msg1 = "The name of the table %s contains unsupported chatacters." % output
+            msg2 = "Please provide a valid name with bucket and table name."
+            logging.critical(" ".join([msg1, msg2]))
             sys.exit(1)
 
         file_name = 'looker_data_%s.csv' % id
@@ -168,13 +171,14 @@ def main():
         for key in pk:
             if (key in list(look_data) and \
             key != ''):
-                next
+                continue
             elif key == '':
                 pk.remove(key)
             else:
-                logging.warn("%s column is not in table columns. The column will be ommited as primary key." % key)
+                msg1 = "%s column is not in table columns. The column will be ommited as primary key." % key
+                msg2 = "Available columns to be used as primary key are %s." % str(list(look_data))
+                logging.warn(" ".join([msg1, msg2]))
                 pk.remove(key)
-                logging.info("Available columns to be used as primary key are %s." % str(list(look_data)))
                 
         """
         for col in list(look_data):
