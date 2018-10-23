@@ -34,6 +34,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)-8s : [line:%(lineno)3s] %(message)s',
     datefmt="%Y-%m-%d %H:%M:%S")
 
+"""
 logger = logging.getLogger()
 logging_gelf_handler = logging_gelf.handlers.GELFTCPSocketHandler(
     host=os.getenv('KBC_LOGGER_ADDR'),
@@ -44,7 +45,7 @@ logger.addHandler(logging_gelf_handler)
 
 # removes the initial stdout logging
 logger.removeHandler(logger.handlers[0])
-
+"""
 
 ### Access the supplied rules
 cfg = docker.Config('/data/')
@@ -169,9 +170,9 @@ def main():
         look_data = fetch_data(api_endpoint, client_id, client_secret, id, limit)
         
         for key in pk:
-            if (key in list(look_data) and \
+            if (str(key) in list(look_data) and \
             key != ''):
-                continue
+                logging.info("%s will be used as primary key." % key)
             elif key == '':
                 pk.remove(key)
             else:
