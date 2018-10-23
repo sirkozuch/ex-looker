@@ -87,8 +87,7 @@ def fetch_data(endpoint, id, secret, object_id, limit):
         logging.info("Login to Looker was successfull.")
         token = login.json()['access_token']
     else:
-        logging.critical("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted.")
-        logging.critical("Server response: %s" % login.reason)
+        logging.critical("Could not login to Looker. Please check, whether correct credentials and/or endpoint were inputted. Server response: %s" % login.reason)
         sys.exit(1)
     
     head = {'Authorization': 'token %s' % token}
@@ -101,9 +100,10 @@ def fetch_data(endpoint, id, secret, object_id, limit):
         logging.info("Data was downloaded successfully.")
         return pd.io.json.json_normalize(data.json())
     else: 
-        logging.critical("Data could not be downloaded.")
-        logging.critical("Request returned: Error %s %s" % (data.status_code, data.reason))
-        logging.warn("For more information, see: %s" % data.json()['documentation_url'])
+        msg1 = "Data could not be downloaded. Request returned: Error %s %s." % (data.status_code, data.reason)
+        msg2 = "For more information, see: %s" % data.json()['documentation_url']
+        msg = " ".join(msg1, msg2)
+        logging.critical(msg)
         sys.exit(1)
 
 def create_manifest(file_name, destination, primary_key, incremental):
@@ -126,8 +126,8 @@ def create_manifest(file_name, destination, primary_key, incremental):
             json.dump(manifest, file_out)
             logging.info("Output %s manifest file produced." % file_name)
     except Exception as e:
-        logging.critical("Could not produce %s output file manifest." % file_name)
-        logging.critical(e)
+        logging.warn("Could not produce %s output file manifest." % file_name)
+        logging.warn(e)
 
 def fullmatch_re(pattern, string):
     match = re.fullmatch(pattern, string)
